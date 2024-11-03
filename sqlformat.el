@@ -62,23 +62,24 @@
 (require 'reformatter)
 
 (defgroup sqlformat nil
-  "Reformat SQL using sqlformat, sqlfluff, or pgformatter."
-  :group 'sql)
+    "Reformat SQL using sqlformat, sqlfluff, or pgformatter."
+    :group 'sql)
 
 (defcustom sqlformat-command 'sqlformat
-  "Command used for reformatting.
+    "Command used for reformatting.
 This command should receive SQL input via STDIN and output the
 reformatted SQL to STDOUT, returning an appropriate exit code."
-  :type '(choice (const :tag "Use \"sqlformat\"" sqlformat)
-                 (const :tag "Use \"sqlfmt\"" sqlfmt)
-                 (const :tag "Use \"pgformatter\"" pgformatter)
-                 (const :tag "Use \"sqlfluff\"" sqlfluff)
-                 (const :tag "Use \"sql-formatter\"" sql-formatter)))
+    :type '(choice (const :tag "Use \"sqlformat\"" sqlformat)
+               (const :tag "Use \"sqlfmt\"" sqlfmt)
+               (const :tag "Use \"pgformatter\"" pgformatter)
+               (const :tag "Use \"sqlfluff\"" sqlfluff)
+               (const :tag "Use \"sqruff\"" sqruff)
+               (const :tag "Use \"sql-formatter\"" sql-formatter)))
 
 (defcustom sqlformat-args '()
-  "List of command-line args for reformatting command.
+    "List of command-line args for reformatting command.
 For example, these args may be useful for sqlformat: (\"-k\" \"upper\")"
-  :type '(repeat string))
+    :type '(repeat string))
 
 
 ;; Commands for reformatting
@@ -87,39 +88,47 @@ For example, these args may be useful for sqlformat: (\"-k\" \"upper\")"
 ;;;###autoload (autoload 'sqlformat-region "sqlformat" nil t)
 ;;;###autoload (autoload 'sqlformat-on-save-mode "sqlformat" nil t)
 (reformatter-define sqlformat
-  :program (pcase sqlformat-command
-             (`sqlformat "sqlformat")
-             (`sqlfmt "sqlfmt")
-             (`pgformatter "pg_format")
-             (`sqlfluff "sqlfluff")
-             (`sql-formatter "sql-formatter"))
-  :args (pcase sqlformat-command
-          (`sqlformat  (append sqlformat-args '("-r" "-")))
-          (`sqlfmt  (append sqlformat-args '("-")))
-          (`pgformatter (append sqlformat-args '("-")))
-          (`sqlfluff (append '("format") sqlformat-args '("-")))
-          (`sql-formatter sqlformat-args))
-  :lighter " SQLFmt"
-  :group 'sqlformat)
+    :program (pcase sqlformat-command
+                 (`sqlformat "sqlformat")
+                 (`sqlfmt "sqlfmt")
+                 (`pgformatter "pg_format")
+                 (`sqlfluff "sqlfluff")
+                 (`sqruff "sqruff")
+                 (`sql-formatter "sql-formatter"))
+    :args (pcase sqlformat-command
+              (`sqlformat  (append sqlformat-args '("-r" "-")))
+              (`sqlfmt  (append sqlformat-args '("-")))
+              (`pgformatter (append sqlformat-args '("-")))
+              (`sqlfluff (append '("format") sqlformat-args '("-")))
+              (`sqruff (append sqlformat-args '("fix" "-")))
+              (`sql-formatter sqlformat-args))
+    ;; This works but only for sqruff
+    :exit-code-success-p (lambda (exit-code) (< exit-code 2))
+    ;; This gives cl-assertion-failed for (functionp exit-code-success-p)
+    ;; :exit-code-success-p (pcase sqlformat-command
+    ;;                       (`sqruff (lambda (exit-code) (< exit-code 2)))
+    ;;                       (_ (lambda (exit-code) (zerop exit-code))))
+    :lighter " SQLFmt"
+    :group 'sqlformat)
 
 ;;;###autoload
 (defun sqlformat (beg end)
-  "Reformat SQL in region from BEG to END using `sqlformat-region'.
+    "Reformat SQL in region from BEG to END using `sqlformat-region'.
 If no region is active, the current statement (paragraph) is reformatted.
 Install the \"sqlparse\" (Python) package to get \"sqlformat\", or
-\"pgformatter\" to get \"pg_format\", or install the \"sqlfluff\" (Python) 
+\"pgformatter\" to get \"pg_format\", or install the \"sqlfluff\" (Python)
 package to get \"sqlfluff\"."
-  (interactive "r")
-  (unless (use-region-p)
-    (setq beg (save-excursion
-                (backward-paragraph)
-                (skip-syntax-forward " >")
-                (point))
-          end (save-excursion
-                (forward-paragraph)
-                (skip-syntax-backward " >")
-                (point))))
-  (sqlformat-region beg end (called-interactively-p 'any)))
+    (interactive "r")
+    (unless (use-region-p)
+        (setq beg (save-excursion
+                      (backward-paragraph)
+                      (skip-syntax-forward " >")
+                      (point))
+            end (save-excursion
+                    (forward-paragraph)
+                    (skip-syntax-backward " >")
+                    (point))))
+    (sqlformat-region beg end (called-interactively-p 'any)))
 
 
 (provide 'sqlformat)

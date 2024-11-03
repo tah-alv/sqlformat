@@ -28,6 +28,7 @@ The variable should be assigned one of the following symbol values:
 * [`sqlfluff`][sqlfluff]
 * [`sql-formatter`][sql-formatter]
 * [`sqlfmt`][sqlfmt]
+* [`sqruff`][sqruff] (> v0.20.2)
 
 
 For example, to use [pgformatter][pgformatter] (i.e., the `pg_format` command) with
@@ -68,6 +69,7 @@ e.g. with:
 [sqlfluff]: https://www.sqlfluff.com
 [sql-formatter]: https://github.com/sql-formatter-org/sql-formatter
 [sqlfmt]: https://docs.sqlfmt.com/
+[sqruff]: https://github.com/quarylabs/sqruff
 <hr>
 
 [💝 Support this project and my other Open Source work](https://www.patreon.com/sanityinc)
